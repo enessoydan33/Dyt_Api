@@ -67,6 +67,7 @@ builder.Services
     });
 
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IMeasurementCalculationService, MeasurementCalculationService>();
 
 builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
