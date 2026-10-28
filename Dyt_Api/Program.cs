@@ -69,6 +69,35 @@ builder.Services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IMeasurementCalculationService, MeasurementCalculationService>();
 
+var corsSettings = builder.Configuration
+    .GetSection(CorsSettings.SectionName)
+    .Get<CorsSettings>() ?? new CorsSettings();
+
+var allowedOrigins = corsSettings.AllowedOrigins
+    .Select(origin =>
+    {
+        if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            || uri.PathAndQuery != "/")
+        {
+            throw new InvalidOperationException(
+                $"Cors:AllowedOrigins contains an invalid origin: '{origin}'. Use scheme://host[:port] only.");
+        }
+
+        return uri.GetLeftPart(UriPartial.Authority);
+    })
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsSettings.FrontendPolicyName, policy =>
+        policy
+            .WithOrigins(allowedOrigins)
+            .WithMethods("GET", "POST", "PUT", "DELETE")
+            .WithHeaders("Authorization", "Content-Type"));
+});
+
 builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -102,6 +131,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(CorsSettings.FrontendPolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();
