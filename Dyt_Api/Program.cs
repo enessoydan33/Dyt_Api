@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
 using Dyt_Api.Configuration;
 using Dyt_Api.Data;
 using Dyt_Api.Entities;
@@ -98,7 +99,14 @@ builder.Services.AddCors(options =>
             .WithHeaders("Authorization", "Content-Type"));
 });
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+// Microsoft.AspNetCore.OpenApi reads these options, not the MVC ones above.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
