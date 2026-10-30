@@ -4,7 +4,17 @@ Diyetisyen yazılımının backend API'si (ASP.NET Core .NET 10, PostgreSQL, EF 
 
 ## Yerel kurulum
 
-Gereksinimler: .NET 10 SDK, PostgreSQL ve EF Core araçları (`dotnet tool install --global dotnet-ef`).
+Gereksinimler: .NET 10 SDK, PostgreSQL ve projedeki EF Core sürümüyle uyumlu `dotnet-ef` aracı. Proje EF Core 10.0.10 kullanır, bu yüzden araç sürümü de 10.x olmalıdır. Kurulu sürümü `dotnet ef --version` ile kontrol edebilirsiniz.
+
+```bash
+dotnet tool install --global dotnet-ef --version 10.0.10
+```
+
+Araç daha eski bir sürümle kuruluysa:
+
+```bash
+dotnet tool update --global dotnet-ef --version 10.0.10
+```
 
 Gizli bilgiler repoda tutulmaz. Development ortamında User Secrets ile verilir. Komutları `Dyt_Api/Dyt_Api` proje klasöründe çalıştırın:
 
