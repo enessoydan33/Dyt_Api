@@ -33,7 +33,9 @@ namespace Dyt_Api.Controllers
 
             if (await _userManager.FindByEmailAsync(email) is not null)
             {
-                return BadRequest(new { message = "A user with this email already exists." });
+                ModelState.AddModelError(nameof(RegisterDto.Email), "A user with this email already exists.");
+
+                return ValidationProblem(ModelState);
             }
 
             var now = DateTime.UtcNow;
@@ -52,14 +54,12 @@ namespace Dyt_Api.Controllers
 
             if (!result.Succeeded)
             {
-                return BadRequest(new
+                foreach (var error in result.Errors)
                 {
-                    errors = result.Errors.Select(error => new
-                    {
-                        error.Code,
-                        error.Description
-                    })
-                });
+                    ModelState.AddModelError(GetIdentityErrorField(error.Code), error.Description);
+                }
+
+                return ValidationProblem(ModelState);
             }
 
             return StatusCode(StatusCodes.Status201Created, new
@@ -81,7 +81,7 @@ namespace Dyt_Api.Controllers
                 !user.IsActive ||
                 !await _userManager.CheckPasswordAsync(user, request.Password))
             {
-                return Unauthorized(new { message = InvalidLoginMessage });
+                return Problem(detail: InvalidLoginMessage, statusCode: StatusCodes.Status401Unauthorized);
             }
 
             var tokenResult = await _jwtTokenService.GenerateTokenAsync(user);
@@ -109,6 +109,19 @@ namespace Dyt_Api.Controllers
                 LastName = User.FindFirstValue("lastName"),
                 Roles = User.FindAll(ClaimTypes.Role).Select(claim => claim.Value)
             });
+        }
+
+        private static string GetIdentityErrorField(string errorCode)
+        {
+            if (errorCode.StartsWith("Password", StringComparison.Ordinal))
+            {
+                return nameof(RegisterDto.Password);
+            }
+
+            return errorCode.Contains("Email", StringComparison.Ordinal) ||
+                   errorCode.Contains("UserName", StringComparison.Ordinal)
+                ? nameof(RegisterDto.Email)
+                : errorCode;
         }
     }
 }

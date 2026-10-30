@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Dyt_Api.Configuration;
 using Dyt_Api.Data;
 using Dyt_Api.Entities;
+using Dyt_Api.Exceptions;
 using Dyt_Api.Services;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -102,11 +103,20 @@ builder.Services.AddCors(options =>
 builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        // Hides internal type names and byte positions from JSON parse errors.
+        options.AllowInputFormatterExceptionMessages = false;
+    });
 
 // Microsoft.AspNetCore.OpenApi reads these options, not the MVC ones above.
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+builder.Services.AddProblemDetails(options =>
+    options.CustomizeProblemDetails = ProblemDetailsLogging.LogClientError);
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
@@ -131,6 +141,9 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

@@ -14,6 +14,8 @@ namespace Dyt_Api.Controllers
     [Route("api/custom-foods")]
     public class CustomFoodsController : ControllerBase
     {
+        private const string DuplicateNameMessage = "An active custom food with this name already exists.";
+
         private static readonly Expression<Func<CustomFood, CustomFoodResponseDto>>
             CustomFoodProjection =
                 customFood => new CustomFoodResponseDto
@@ -58,10 +60,7 @@ namespace Dyt_Api.Controllers
                     excludedId: null,
                     cancellationToken))
             {
-                return Conflict(new
-                {
-                    message = "An active custom food with this name already exists."
-                });
+                return Problem(detail: DuplicateNameMessage, statusCode: StatusCodes.Status409Conflict);
             }
 
             var now = DateTime.UtcNow;
@@ -181,10 +180,7 @@ namespace Dyt_Api.Controllers
                     customFood.Id,
                     cancellationToken))
             {
-                return Conflict(new
-                {
-                    message = "An active custom food with this name already exists."
-                });
+                return Problem(detail: DuplicateNameMessage, statusCode: StatusCodes.Status409Conflict);
             }
 
             customFood.Name = name;
