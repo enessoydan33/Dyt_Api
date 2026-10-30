@@ -16,7 +16,7 @@ Araç daha eski bir sürümle kuruluysa:
 dotnet tool update --global dotnet-ef --version 10.0.10
 ```
 
-Gizli bilgiler repoda tutulmaz. Development ortamında User Secrets ile verilir. Komutları `Dyt_Api/Dyt_Api` proje klasöründe çalıştırın:
+Gizli bilgiler repoda tutulmaz. Development ortamında User Secrets ile verilir. Komutları repodaki `Dyt_Api` proje klasöründe (`Dyt_Api.csproj` dosyasının bulunduğu yer) çalıştırın:
 
 ```bash
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=<database>;Username=<username>;Password=<password>"

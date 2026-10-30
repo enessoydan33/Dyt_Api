@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-
 namespace Dyt_Api.Exceptions
 {
     public static class ProblemDetailsLogging
