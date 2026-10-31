@@ -16,8 +16,10 @@ namespace Dyt_Api.Validators.Clients
                 .NotEmpty();
 
             RuleFor(request => request.BirthDate)
-                .Must(date => date <= DateOnly.FromDateTime(DateTime.UtcNow))
-                .WithMessage("BirthDate cannot be in the future.");
+                .Must(ClientBirthDateRules.IsNotInFuture)
+                .WithMessage(ClientBirthDateRules.FutureDateMessage)
+                .Must(ClientBirthDateRules.IsWithinMaximumAge)
+                .WithMessage(ClientBirthDateRules.MaximumAgeMessage);
 
             RuleFor(request => request.Height)
                 .GreaterThan(0)

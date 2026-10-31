@@ -16,8 +16,11 @@ namespace Dyt_Api.Validators.Clients
                 .NotEmpty();
 
             RuleFor(request => request.BirthDate)
-                .Must(date => date <= DateOnly.FromDateTime(DateTime.UtcNow))
-                .WithMessage("BirthDate cannot be in the future.");
+                .NotNull()
+                .Must(date => !date.HasValue || ClientBirthDateRules.IsNotInFuture(date.Value))
+                .WithMessage(ClientBirthDateRules.FutureDateMessage)
+                .Must(date => !date.HasValue || ClientBirthDateRules.IsWithinMaximumAge(date.Value))
+                .WithMessage(ClientBirthDateRules.MaximumAgeMessage);
 
             RuleFor(request => request.Height)
                 .GreaterThan(0)
@@ -32,12 +35,15 @@ namespace Dyt_Api.Validators.Clients
                 .When(request => !string.IsNullOrWhiteSpace(request.PhoneNumber));
 
             RuleFor(request => request.Gender)
+                .NotNull()
                 .IsInEnum();
 
             RuleFor(request => request.ActivityLevel)
+                .NotNull()
                 .IsInEnum();
 
             RuleFor(request => request.Goal)
+                .NotNull()
                 .IsInEnum();
         }
     }

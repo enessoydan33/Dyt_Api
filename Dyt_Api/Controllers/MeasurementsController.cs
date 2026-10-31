@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Dyt_Api.Data;
 using Dyt_Api.DTOs.Measurements;
 using Dyt_Api.Entities;
+using Dyt_Api.Enums;
 using Dyt_Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -105,7 +106,7 @@ namespace Dyt_Api.Controllers
             return CreatedAtAction(
                 nameof(GetById),
                 new { clientId, measurementId = measurement.Id },
-                ToResponseDto(measurement));
+                ApplyEnergyState(ToResponseDto(measurement), client));
         }
 
         [HttpGet]
@@ -118,7 +119,9 @@ namespace Dyt_Api.Controllers
                 return Unauthorized();
             }
 
-            if (await GetOwnedClientAsync(clientId, userId, cancellationToken) is null)
+            var client = await GetOwnedClientAsync(clientId, userId, cancellationToken);
+
+            if (client is null)
             {
                 return NotFound();
             }
@@ -131,7 +134,7 @@ namespace Dyt_Api.Controllers
                 .Select(MeasurementProjection)
                 .ToListAsync(cancellationToken);
 
-            return Ok(measurements);
+            return Ok(measurements.ConvertAll(measurement => ApplyEnergyState(measurement, client)));
         }
 
         [HttpGet("{measurementId:int}")]
@@ -145,7 +148,9 @@ namespace Dyt_Api.Controllers
                 return Unauthorized();
             }
 
-            if (await GetOwnedClientAsync(clientId, userId, cancellationToken) is null)
+            var client = await GetOwnedClientAsync(clientId, userId, cancellationToken);
+
+            if (client is null)
             {
                 return NotFound();
             }
@@ -158,7 +163,7 @@ namespace Dyt_Api.Controllers
                 .Select(MeasurementProjection)
                 .SingleOrDefaultAsync(cancellationToken);
 
-            return measurement is null ? NotFound() : Ok(measurement);
+            return measurement is null ? NotFound() : Ok(ApplyEnergyState(measurement, client));
         }
 
         [HttpPut("{measurementId:int}")]
@@ -222,7 +227,41 @@ namespace Dyt_Api.Controllers
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            return Ok(ToResponseDto(measurement));
+            return Ok(ApplyEnergyState(ToResponseDto(measurement), client));
+        }
+
+        // Stored energy values can predate a change to the client's birth date or gender.
+        // The response always follows the current client, without rewriting history.
+        private MeasurementResponseDto ApplyEnergyState(
+            MeasurementResponseDto measurement,
+            Client client)
+        {
+            measurement.EnergyCalculationStatus = _calculationService.GetEnergyCalculationStatus(
+                client.BirthDate,
+                measurement.MeasurementDate,
+                client.Gender);
+
+            if (measurement.EnergyCalculationStatus != EnergyCalculationStatus.Calculated)
+            {
+                measurement.BasalMetabolicRate = null;
+                measurement.DailyCalorieNeed = null;
+            }
+            else if (measurement.BasalMetabolicRate is null)
+            {
+                var calculation = _calculationService.Calculate(
+                    measurement.Weight,
+                    measurement.Height,
+                    client.Height,
+                    client.BirthDate,
+                    measurement.MeasurementDate,
+                    client.Gender,
+                    client.ActivityLevel);
+
+                measurement.BasalMetabolicRate = calculation.BasalMetabolicRate;
+                measurement.DailyCalorieNeed = calculation.DailyCalorieNeed;
+            }
+
+            return measurement;
         }
 
         private Task<Client?> GetOwnedClientAsync(

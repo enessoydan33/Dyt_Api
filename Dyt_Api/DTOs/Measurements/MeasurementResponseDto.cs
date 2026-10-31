@@ -1,3 +1,5 @@
+using Dyt_Api.Enums;
+
 namespace Dyt_Api.DTOs.Measurements
 {
     public class MeasurementResponseDto
@@ -16,6 +18,7 @@ namespace Dyt_Api.DTOs.Measurements
         public decimal? NeckCircumference { get; set; }
         public decimal? BasalMetabolicRate { get; set; }
         public decimal? DailyCalorieNeed { get; set; }
+        public EnergyCalculationStatus EnergyCalculationStatus { get; set; }
         public string? Notes { get; set; }
         public DateTime CreatedAt { get; set; }
     }

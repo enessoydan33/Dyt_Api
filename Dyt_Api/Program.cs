@@ -104,7 +104,7 @@ builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new StrictEnumConverter());
         // Hides internal type names and byte positions from JSON parse errors.
         options.AllowInputFormatterExceptionMessages = false;
     });

@@ -12,6 +12,11 @@ namespace Dyt_Api.Services
             DateOnly measurementDate,
             Gender gender,
             ActivityLevel activityLevel);
+
+        EnergyCalculationStatus GetEnergyCalculationStatus(
+            DateOnly birthDate,
+            DateOnly measurementDate,
+            Gender gender);
     }
 
     public sealed record MeasurementCalculationResult(

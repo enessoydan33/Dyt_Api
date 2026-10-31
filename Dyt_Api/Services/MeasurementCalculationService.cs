@@ -4,6 +4,8 @@ namespace Dyt_Api.Services
 {
     public class MeasurementCalculationService : IMeasurementCalculationService
     {
+        private const int AdultAge = 18;
+
         public MeasurementCalculationResult Calculate(
             decimal weightKg,
             decimal? measurementHeightCm,
@@ -28,11 +30,10 @@ namespace Dyt_Api.Services
 
             var heightMeters = height.Value / 100m;
             var bodyMassIndex = Round(weightKg / (heightMeters * heightMeters));
-            var basalMetabolicRate = CalculateBasalMetabolicRate(
-                weightKg,
-                height.Value,
-                age,
-                gender);
+            var energyStatus = GetEnergyCalculationStatus(birthDate, measurementDate, gender);
+            var basalMetabolicRate = energyStatus == EnergyCalculationStatus.Calculated
+                ? CalculateBasalMetabolicRate(weightKg, height.Value, age, gender)
+                : null;
 
             var activityFactor = GetActivityFactor(activityLevel);
             decimal? dailyCalorieNeed =
@@ -45,6 +46,21 @@ namespace Dyt_Api.Services
                 bodyMassIndex,
                 basalMetabolicRate,
                 dailyCalorieNeed);
+        }
+
+        public EnergyCalculationStatus GetEnergyCalculationStatus(
+            DateOnly birthDate,
+            DateOnly measurementDate,
+            Gender gender)
+        {
+            if (measurementDate < birthDate.AddYears(AdultAge))
+            {
+                return EnergyCalculationStatus.UnsupportedForMinor;
+            }
+
+            return gender is Gender.Male or Gender.Female
+                ? EnergyCalculationStatus.Calculated
+                : EnergyCalculationStatus.UnsupportedForGender;
         }
 
         private static int CalculateAge(DateOnly birthDate, DateOnly measurementDate)

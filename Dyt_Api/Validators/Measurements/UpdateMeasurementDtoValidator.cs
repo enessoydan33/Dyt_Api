@@ -9,7 +9,7 @@ namespace Dyt_Api.Validators.Measurements
         {
             RuleFor(request => request.MeasurementDate)
                 .NotEmpty()
-                .Must(date => date <= DateOnly.FromDateTime(DateTime.UtcNow))
+                .Must(date => date <= BusinessDate.Today)
                 .WithMessage("MeasurementDate cannot be in the future.");
 
             RuleFor(request => request.Weight)
