@@ -6,6 +6,7 @@ using Dyt_Api.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Dyt_Api.Controllers
 {
@@ -14,6 +15,7 @@ namespace Dyt_Api.Controllers
     [Route("api/custom-foods")]
     public class CustomFoodsController : ControllerBase
     {
+        private const string ActiveNameIndexName = "UX_CustomFoods_ActiveName";
         private const string DuplicateNameMessage = "An active custom food with this name already exists.";
 
         private static readonly Expression<Func<CustomFood, CustomFoodResponseDto>>
@@ -82,7 +84,15 @@ namespace Dyt_Api.Controllers
             };
 
             _context.CustomFoods.Add(customFood);
-            await _context.SaveChangesAsync(cancellationToken);
+
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException exception) when (IsDuplicateNameViolation(exception))
+            {
+                return Problem(detail: DuplicateNameMessage, statusCode: StatusCodes.Status409Conflict);
+            }
 
             return CreatedAtAction(
                 nameof(GetById),
@@ -195,7 +205,14 @@ namespace Dyt_Api.Controllers
             customFood.IsActive = request.IsActive;
             customFood.UpdatedAt = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException exception) when (IsDuplicateNameViolation(exception))
+            {
+                return Problem(detail: DuplicateNameMessage, statusCode: StatusCodes.Status409Conflict);
+            }
 
             return Ok(ToResponseDto(customFood));
         }
@@ -236,7 +253,11 @@ namespace Dyt_Api.Controllers
             int? excludedId,
             CancellationToken cancellationToken)
         {
-            var normalizedName = name.ToLower();
+            // Folds I and İ to i, keeps ı distinct. Must match the UX_CustomFoods_ActiveName expression.
+            var normalizedName = name
+                .Replace("İ", "i")
+                .Replace("I", "i")
+                .ToLowerInvariant();
 
             return _context.CustomFoods
                 .AsNoTracking()
@@ -245,8 +266,20 @@ namespace Dyt_Api.Controllers
                         customFood.CreatedByUserId == userId &&
                         customFood.IsActive &&
                         (!excludedId.HasValue || customFood.Id != excludedId.Value) &&
-                        customFood.Name.ToLower() == normalizedName,
+                        customFood.Name
+                            .Replace("İ", "i")
+                            .Replace("I", "i")
+                            .ToLower() == normalizedName,
                     cancellationToken);
+        }
+
+        private static bool IsDuplicateNameViolation(DbUpdateException exception)
+        {
+            return exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: ActiveNameIndexName
+            };
         }
 
         private bool TryGetAuthenticatedUserId(out int userId)
