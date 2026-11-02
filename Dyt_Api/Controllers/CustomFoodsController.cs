@@ -183,7 +183,7 @@ namespace Dyt_Api.Controllers
 
             var name = request.Name.Trim();
 
-            if (request.IsActive &&
+            if (request.IsActive!.Value &&
                 await ActiveDuplicateExistsAsync(
                     userId,
                     name,
@@ -194,15 +194,15 @@ namespace Dyt_Api.Controllers
             }
 
             customFood.Name = name;
-            customFood.Calories = request.Calories;
-            customFood.Protein = request.Protein;
-            customFood.Carbohydrate = request.Carbohydrate;
-            customFood.Fat = request.Fat;
-            customFood.Fiber = request.Fiber;
+            customFood.Calories = request.Calories!.Value;
+            customFood.Protein = request.Protein!.Value;
+            customFood.Carbohydrate = request.Carbohydrate!.Value;
+            customFood.Fat = request.Fat!.Value;
+            customFood.Fiber = request.Fiber!.Value;
             customFood.ServingSize = request.ServingSize;
             customFood.ServingUnit = request.ServingUnit.Trim();
             customFood.Description = NormalizeOptional(request.Description);
-            customFood.IsActive = request.IsActive;
+            customFood.IsActive = request.IsActive.Value;
             customFood.UpdatedAt = DateTime.UtcNow;
 
             try

@@ -153,13 +153,13 @@ namespace Dyt_Api.Controllers
             client.LastName = request.LastName.Trim();
             client.PhoneNumber = NormalizeOptional(request.PhoneNumber);
             client.Email = NormalizeOptional(request.Email);
-            client.BirthDate = request.BirthDate;
-            client.Gender = request.Gender;
+            client.BirthDate = request.BirthDate!.Value;
+            client.Gender = request.Gender!.Value;
             client.Height = request.Height;
-            client.ActivityLevel = request.ActivityLevel;
-            client.Goal = request.Goal;
+            client.ActivityLevel = request.ActivityLevel!.Value;
+            client.Goal = request.Goal!.Value;
             client.Notes = NormalizeOptional(request.Notes);
-            client.IsActive = request.IsActive;
+            client.IsActive = request.IsActive!.Value;
             client.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);

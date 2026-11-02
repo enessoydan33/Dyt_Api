@@ -13,19 +13,24 @@ namespace Dyt_Api.Validators.CustomFoods
                 .MaximumLength(200);
 
             RuleFor(request => request.Calories)
+                .NotNull()
                 .GreaterThanOrEqualTo(0)
                 .LessThanOrEqualTo(100000);
 
             RuleFor(request => request.Protein)
+                .NotNull()
                 .GreaterThanOrEqualTo(0);
 
             RuleFor(request => request.Carbohydrate)
+                .NotNull()
                 .GreaterThanOrEqualTo(0);
 
             RuleFor(request => request.Fat)
+                .NotNull()
                 .GreaterThanOrEqualTo(0);
 
             RuleFor(request => request.Fiber)
+                .NotNull()
                 .GreaterThanOrEqualTo(0);
 
             RuleFor(request => request.ServingSize)
@@ -40,6 +45,9 @@ namespace Dyt_Api.Validators.CustomFoods
             RuleFor(request => request.Description)
                 .MaximumLength(1000)
                 .When(request => request.Description is not null);
+
+            RuleFor(request => request.IsActive)
+                .NotNull();
         }
     }
 }
